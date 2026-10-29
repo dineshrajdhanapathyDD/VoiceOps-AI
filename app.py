@@ -87,6 +87,22 @@ def _default_region() -> str:
     return str(aws.get("region") or aws.get("aws_default_region") or bedrock_client.DEFAULT_REGION)
 
 
+def _default_model() -> str:
+    """Model ID from secrets, read at run time.
+
+    bedrock_client.DEFAULT_MODEL_ID is computed at import, before Streamlit has
+    parsed secrets and copied root-level keys into os.environ, so a root-level
+    VOICEOPS_BEDROCK_MODEL_ID secret would otherwise be ignored.
+    """
+    try:
+        root = st.secrets.get("VOICEOPS_BEDROCK_MODEL_ID")
+    except Exception:  # No secrets.toml at all.
+        root = None
+    aws = {str(k).lower(): v for k, v in _secrets_section("aws").items()}
+    value = root or aws.get("model_id") or bedrock_client.DEFAULT_MODEL_ID
+    return str(value).strip()
+
+
 def _access_code() -> str:
     """Optional code that visitors must enter before Bedrock can be called."""
     return str(_secrets_section("voiceops").get("bedrock_access_code") or "")
@@ -111,7 +127,7 @@ def _run_bedrock() -> None:
     if not _access_granted():
         st.session_state[AI_ERROR_KEY] = "Incorrect access code."
         return
-    model_id = st.session_state.get("bedrock_model_id", bedrock_client.DEFAULT_MODEL_ID)
+    model_id = (st.session_state.get("bedrock_model_id") or _default_model()).strip()
     try:
         st.session_state[AI_KEY] = bedrock_client.explain_with_bedrock(
             logs,
@@ -136,7 +152,7 @@ def render_sidebar() -> None:
         st.subheader("Amazon Bedrock (optional)")
         st.toggle("Enable AI explanation", key="bedrock_enabled", value=False)
         if st.session_state.get("bedrock_enabled"):
-            st.text_input("Model ID", value=bedrock_client.DEFAULT_MODEL_ID, key="bedrock_model_id")
+            st.text_input("Model ID", value=_default_model(), key="bedrock_model_id")
             st.text_input("Region", value=_default_region(), key="bedrock_region")
             source = (
                 "AWS credentials from Streamlit secrets"

@@ -219,3 +219,19 @@ def test_access_code_gates_bedrock(monkeypatch):
     explain.click().run()
     assert not at.exception
     assert "credentials" in captured
+
+
+def test_model_id_from_root_level_secret(monkeypatch):
+    captured = _capture_explain(monkeypatch)
+    at = _hosted_app({"VOICEOPS_BEDROCK_MODEL_ID": "amazon.nova-pro-v1:0", "aws": AWS_SECRETS})
+    assert at.text_input(key="bedrock_model_id").value == "amazon.nova-pro-v1:0"
+    at.checkbox(key="bedrock_consent").check().run()
+    _button(at, "Explain with Bedrock").click().run()
+    assert captured["model_id"] == "amazon.nova-pro-v1:0"
+
+
+def test_model_id_defaults_without_secret():
+    import bedrock_client
+
+    at = _hosted_app({"aws": AWS_SECRETS})
+    assert at.text_input(key="bedrock_model_id").value == bedrock_client.DEFAULT_MODEL_ID
