@@ -52,7 +52,7 @@
         <mxCell id="bedrock" value="&lt;b&gt;Amazon Bedrock Runtime&lt;/b&gt;&lt;br&gt;Converse API - us-east-1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
           <mxGeometry x="860" y="320" width="280" height="70" as="geometry" />
         </mxCell>
-        <mxCell id="nova" value="&lt;b&gt;Amazon Nova 2 Lite&lt;/b&gt;&lt;br&gt;us.amazon.nova-2-lite-v1:0" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+        <mxCell id="nova" value="&lt;b&gt;Amazon Nova Pro&lt;/b&gt;&lt;br&gt;amazon.nova-pro-v1:0" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
           <mxGeometry x="860" y="450" width="280" height="70" as="geometry" />
         </mxCell>
         <mxCell id="legend" value="&lt;b&gt;Legend&lt;/b&gt;&lt;br&gt;Solid: local only&lt;br&gt;Orange dashed: Wispr Flow traffic&lt;br&gt;Yellow dotted: optional Bedrock traffic (step 7 only)" style="rounded=0;whiteSpace=wrap;html=1;align=left;spacingLeft=10;fillColor=#ffffff;strokeColor=#999999;" vertex="1" parent="1">

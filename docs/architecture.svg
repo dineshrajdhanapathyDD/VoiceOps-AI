@@ -65,8 +65,8 @@
     <text x="1000" y="148">audio + text box context, TLS</text>
     <text x="1000" y="350" font-weight="bold">Amazon Bedrock Runtime</text>
     <text x="1000" y="368">Converse API - us-east-1</text>
-    <text x="1000" y="480" font-weight="bold">Amazon Nova 2 Lite</text>
-    <text x="1000" y="498">us.amazon.nova-2-lite-v1:0</text>
+    <text x="1000" y="480" font-weight="bold">Amazon Nova Pro</text>
+    <text x="1000" y="498">amazon.nova-pro-v1:0</text>
   </g>
   <text x="842" y="610" font-weight="bold">Legend</text>
   <line x1="842" y1="628" x2="882" y2="628" stroke="#333" stroke-width="1.5"/>

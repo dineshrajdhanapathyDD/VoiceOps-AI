@@ -17,7 +17,7 @@ from typing import Any
 
 from analyzer import AnalysisResult
 
-DEFAULT_MODEL_ID = os.environ.get("VOICEOPS_BEDROCK_MODEL_ID", "us.amazon.nova-2-lite-v1:0")
+DEFAULT_MODEL_ID = os.environ.get("VOICEOPS_BEDROCK_MODEL_ID", "amazon.nova-pro-v1:0")
 DEFAULT_REGION = os.environ.get("VOICEOPS_BEDROCK_REGION", "us-east-1")
 
 # Keep requests small: limits cost and the amount of log data leaving the machine.

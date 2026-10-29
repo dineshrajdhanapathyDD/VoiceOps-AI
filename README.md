@@ -36,7 +36,7 @@ The editable source is [`docs/architecture.drawio`](docs/architecture.drawio). O
 | --- | --- | --- |
 | Developer workstation (local) | Browser, Streamlit server, `app.py`, `analyzer.py`, `bedrock_client.py`, downloaded reports | Nothing by default |
 | Wispr Flow cloud (third party) | Speech-to-text transcription | Your voice audio and nearby text box content, only while you dictate |
-| AWS Cloud (your account, optional) | Amazon Bedrock Runtime and Amazon Nova 2 Lite | Redacted logs, only after step 7 |
+| AWS Cloud (your account, optional) | Amazon Bedrock Runtime and Amazon Nova Pro | Redacted logs, only after step 7 |
 
 ### Components
 
@@ -116,7 +116,7 @@ If you see `No matching distribution found for requirements.txt`, the `-r` flag 
 
 1. Make AWS credentials available through the standard chain, for example `aws configure`, `aws login`, or `aws sso login`. Check which identity is active with `aws sts get-caller-identity`.
 
-2. Grant only the permission the app needs. The default model is a cross-Region inference profile, so the policy needs both the profile and the underlying foundation model. Replace `<account-id>`:
+2. Grant only the permission the app needs. The default model is called directly in `us-east-1`, so the policy only needs that foundation model:
 
    ```json
    {
@@ -127,8 +127,7 @@ If you see `No matching distribution found for requirements.txt`, the `-r` flag 
          "Effect": "Allow",
          "Action": "bedrock:InvokeModel",
          "Resource": [
-           "arn:aws:bedrock:us-east-1:<account-id>:inference-profile/us.amazon.nova-2-lite-v1:0",
-           "arn:aws:bedrock:*::foundation-model/amazon.nova-2-lite-v1:0"
+           "arn:aws:bedrock:us-east-1::foundation-model/amazon.nova-pro-v1:0"
          ]
        }
      ]
@@ -137,7 +136,7 @@ If you see `No matching distribution found for requirements.txt`, the `-r` flag 
 
 3. Start the app, turn on **Enable AI explanation** in the sidebar, analyze logs, then use the panel under the results.
 
-The defaults are model `us.amazon.nova-2-lite-v1:0` in Region `us-east-1`. Override them in the sidebar or with environment variables:
+The defaults are model `amazon.nova-pro-v1:0` in Region `us-east-1`. Override them in the sidebar or with environment variables:
 
 ```powershell
 $env:VOICEOPS_BEDROCK_MODEL_ID = "us.amazon.nova-pro-v1:0"
