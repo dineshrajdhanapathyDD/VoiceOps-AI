@@ -1,0 +1,8 @@
+[server]
+# Only accept connections from this machine. Streamlit otherwise listens on
+# all network interfaces. Override with --server.address if you need LAN access.
+address = "localhost"
+
+[browser]
+# Do not send Streamlit usage statistics.
+gatherUsageStats = false

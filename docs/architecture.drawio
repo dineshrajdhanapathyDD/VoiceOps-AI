@@ -1,0 +1,124 @@
+<mxfile host="app.diagrams.net" agent="VoiceOps AI" version="24.0.0">
+  <diagram id="voiceops-architecture" name="Architecture">
+    <mxGraphModel dx="1200" dy="760" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="760" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Trust zones -->
+        <mxCell id="zone_local" value="Developer workstation (local)" style="rounded=1;arcSize=2;whiteSpace=wrap;html=1;dashed=1;fillColor=#f5f5f5;strokeColor=#666666;verticalAlign=top;align=left;spacingLeft=10;spacingTop=4;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="20" y="50" width="780" height="640" as="geometry" />
+        </mxCell>
+        <mxCell id="zone_server" value="Streamlit server process (python -m streamlit run app.py)" style="rounded=1;arcSize=2;whiteSpace=wrap;html=1;dashed=1;fillColor=#ffffff;strokeColor=#999999;verticalAlign=top;align=left;spacingLeft=10;spacingTop=4;fontStyle=2;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="260" y="230" width="520" height="440" as="geometry" />
+        </mxCell>
+        <mxCell id="zone_wispr" value="Wispr Flow cloud (third party)" style="rounded=1;arcSize=3;whiteSpace=wrap;html=1;dashed=1;fillColor=#fff5eb;strokeColor=#d79b00;verticalAlign=top;align=left;spacingLeft=10;spacingTop=4;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="830" y="50" width="340" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="zone_aws" value="AWS Cloud (your account) - optional" style="rounded=1;arcSize=2;whiteSpace=wrap;html=1;dashed=1;fillColor=#fffbe6;strokeColor=#d6b656;verticalAlign=top;align=left;spacingLeft=10;spacingTop=4;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="830" y="260" width="340" height="300" as="geometry" />
+        </mxCell>
+
+        <!-- Local components -->
+        <mxCell id="dev" value="Developer" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" vertex="1" parent="1">
+          <mxGeometry x="70" y="80" width="30" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="wispr" value="&lt;b&gt;Wispr Flow desktop app&lt;/b&gt;&lt;br&gt;voice to text in any text box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="45" y="250" width="170" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="browser" value="&lt;b&gt;Browser&lt;/b&gt;&lt;br&gt;Streamlit UI - localhost:8501" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="290" y="80" width="240" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="app" value="&lt;b&gt;app.py&lt;/b&gt;&lt;br&gt;UI, session state, consent gate" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="280" y="290" width="220" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="analyzer" value="&lt;b&gt;analyzer.py&lt;/b&gt;&lt;br&gt;weighted signal rules&lt;br&gt;samples - report builder" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="280" y="410" width="220" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="report" value="&lt;b&gt;Markdown incident report&lt;/b&gt;&lt;br&gt;downloaded to your machine" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="280" y="570" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="bedrockc" value="&lt;b&gt;bedrock_client.py&lt;/b&gt; (optional)&lt;br&gt;redact - preview - 20k char cap&lt;br&gt;risky-command check" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="540" y="410" width="220" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="creds" value="&lt;b&gt;AWS credential chain&lt;/b&gt;&lt;br&gt;profile, SSO, or env vars" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="540" y="570" width="220" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Cloud components -->
+        <mxCell id="wcloud" value="&lt;b&gt;Cloud transcription&lt;/b&gt;&lt;br&gt;audio + text box context, TLS" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="860" y="100" width="280" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="bedrock" value="&lt;b&gt;Amazon Bedrock Runtime&lt;/b&gt;&lt;br&gt;Converse API - us-east-1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="860" y="320" width="280" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="nova" value="&lt;b&gt;Amazon Nova 2 Lite&lt;/b&gt;&lt;br&gt;us.amazon.nova-2-lite-v1:0" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="860" y="450" width="280" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="legend" value="&lt;b&gt;Legend&lt;/b&gt;&lt;br&gt;Solid: local only&lt;br&gt;Orange dashed: Wispr Flow traffic&lt;br&gt;Yellow dotted: optional Bedrock traffic (step 7 only)" style="rounded=0;whiteSpace=wrap;html=1;align=left;spacingLeft=10;fillColor=#ffffff;strokeColor=#999999;" vertex="1" parent="1">
+          <mxGeometry x="830" y="590" width="340" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Flows -->
+        <mxCell id="e1" value="1. speak" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;labelBackgroundColor=#f5f5f5;" edge="1" parent="1" source="dev" target="wispr">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="85" y="250" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e2" value="2. audio + text box context" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;startArrow=block;dashed=1;strokeColor=#d79b00;fontColor=#9c6500;labelBackgroundColor=#f5f5f5;" edge="1" parent="1" source="wispr" target="wcloud">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="170" y="200" />
+              <mxPoint x="1000" y="200" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e3" value="3. types text" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;labelBackgroundColor=#f5f5f5;" edge="1" parent="1" source="wispr" target="browser">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="245" y="285" />
+              <mxPoint x="245" y="140" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e4" value="4. paste logs" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;labelBackgroundColor=#f5f5f5;" edge="1" parent="1" source="dev" target="browser">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="290" y="100" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e5" value="WebSocket (localhost)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;startArrow=block;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="browser" target="app">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" value="5. analyze_logs()" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="app" target="analyzer">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" value="6. generate_markdown_report()" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="analyzer" target="report">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8" value="7. only after toggle + consent + click" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;dashed=1;dashPattern=2 4;strokeWidth=2;strokeColor=#b59a2a;fontColor=#7a6200;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="app" target="bedrockc">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="650" y="325" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e9" value="8. redacted logs, HTTPS + SigV4&lt;br&gt;9. explanation back" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;startArrow=block;dashed=1;dashPattern=2 4;strokeWidth=2;strokeColor=#b59a2a;fontColor=#7a6200;labelBackgroundColor=#fffbe6;" edge="1" parent="1" source="bedrockc" target="bedrock">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="810" y="455" />
+              <mxPoint x="810" y="355" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e10" value="inference" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;dashed=1;dashPattern=2 4;strokeWidth=2;strokeColor=#b59a2a;labelBackgroundColor=#fffbe6;" edge="1" parent="1" source="bedrock" target="nova">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e11" value="credentials" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#b85450;fontColor=#b85450;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="creds" target="bedrockc">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

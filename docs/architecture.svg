@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1190 710" width="1190" height="710" font-family="Helvetica, Arial, sans-serif" font-size="12" role="img" aria-labelledby="title desc">
+  <title id="title">VoiceOps AI architecture</title>
+  <desc id="desc">The developer dictates with Wispr Flow or pastes logs into the local Streamlit UI. app.py calls analyzer.py locally and builds a Markdown report. Only after an explicit opt-in, bedrock_client.py sends redacted logs to Amazon Bedrock and Amazon Nova in the user's AWS account. Wispr Flow sends audio and text box context to Wispr's cloud for transcription.</desc>
+  <!-- Editable source: docs/architecture.drawio. Keep both files in sync. -->
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#333"/></marker>
+    <marker id="o" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d79b00"/></marker>
+    <marker id="y" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b59a2a"/></marker>
+    <marker id="r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b85450"/></marker>
+  </defs>
+  <rect width="1190" height="710" fill="#ffffff"/>
+
+  <!-- Trust zones -->
+  <rect x="20" y="50" width="780" height="640" rx="8" fill="#f5f5f5" stroke="#666" stroke-dasharray="6 4"/>
+  <text x="32" y="70" font-size="14" font-weight="bold">Developer workstation (local)</text>
+  <rect x="260" y="230" width="520" height="440" rx="8" fill="#fff" stroke="#999" stroke-dasharray="6 4"/>
+  <text x="272" y="248" font-style="italic" fill="#555">Streamlit server process (python -m streamlit run app.py)</text>
+  <rect x="830" y="50" width="340" height="170" rx="8" fill="#fff5eb" stroke="#d79b00" stroke-dasharray="6 4"/>
+  <text x="842" y="70" font-size="14" font-weight="bold">Wispr Flow cloud (third party)</text>
+  <rect x="830" y="260" width="340" height="300" rx="8" fill="#fffbe6" stroke="#d6b656" stroke-dasharray="6 4"/>
+  <text x="842" y="280" font-size="14" font-weight="bold">AWS Cloud (your account) - optional</text>
+
+  <!-- Developer -->
+  <g stroke="#333" stroke-width="1.5" fill="#fff">
+    <circle cx="85" cy="90" r="9"/>
+    <line x1="85" y1="99" x2="85" y2="122"/>
+    <line x1="72" y1="107" x2="98" y2="107"/>
+    <line x1="85" y1="122" x2="74" y2="140"/>
+    <line x1="85" y1="122" x2="96" y2="140"/>
+  </g>
+  <text x="85" y="156" text-anchor="middle">Developer</text>
+
+  <!-- Boxes -->
+  <g stroke-width="1.2">
+    <rect x="45" y="250" width="170" height="70" rx="8" fill="#ffe6cc" stroke="#d79b00"/>
+    <rect x="290" y="80" width="240" height="80" rx="8" fill="#dae8fc" stroke="#6c8ebf"/>
+    <rect x="280" y="290" width="220" height="70" rx="8" fill="#dae8fc" stroke="#6c8ebf"/>
+    <rect x="280" y="410" width="220" height="90" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+    <rect x="280" y="570" width="220" height="60" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+    <rect x="540" y="410" width="220" height="90" rx="8" fill="#fff2cc" stroke="#d6b656"/>
+    <rect x="540" y="570" width="220" height="60" rx="8" fill="#f8cecc" stroke="#b85450"/>
+    <rect x="860" y="100" width="280" height="70" rx="8" fill="#ffe6cc" stroke="#d79b00"/>
+    <rect x="860" y="320" width="280" height="70" rx="8" fill="#fff2cc" stroke="#d6b656"/>
+    <rect x="860" y="450" width="280" height="70" rx="8" fill="#fff2cc" stroke="#d6b656"/>
+    <rect x="830" y="590" width="340" height="80" fill="#fff" stroke="#999"/>
+  </g>
+  <g text-anchor="middle">
+    <text x="130" y="280" font-weight="bold">Wispr Flow desktop app</text>
+    <text x="130" y="297">voice to text in any text box</text>
+    <text x="410" y="114" font-weight="bold">Browser</text>
+    <text x="410" y="132">Streamlit UI - localhost:8501</text>
+    <text x="390" y="320" font-weight="bold">app.py</text>
+    <text x="390" y="338">UI, session state, consent gate</text>
+    <text x="390" y="440" font-weight="bold">analyzer.py</text>
+    <text x="390" y="458">weighted signal rules</text>
+    <text x="390" y="475">samples - report builder</text>
+    <text x="390" y="596" font-weight="bold">Markdown incident report</text>
+    <text x="390" y="613">downloaded to your machine</text>
+    <text x="650" y="440"><tspan font-weight="bold">bedrock_client.py</tspan> (optional)</text>
+    <text x="650" y="458">redact - preview - 20k char cap</text>
+    <text x="650" y="475">risky-command check</text>
+    <text x="650" y="596" font-weight="bold">AWS credential chain</text>
+    <text x="650" y="613">profile, SSO, or env vars</text>
+    <text x="1000" y="130" font-weight="bold">Cloud transcription</text>
+    <text x="1000" y="148">audio + text box context, TLS</text>
+    <text x="1000" y="350" font-weight="bold">Amazon Bedrock Runtime</text>
+    <text x="1000" y="368">Converse API - us-east-1</text>
+    <text x="1000" y="480" font-weight="bold">Amazon Nova 2 Lite</text>
+    <text x="1000" y="498">us.amazon.nova-2-lite-v1:0</text>
+  </g>
+  <text x="842" y="610" font-weight="bold">Legend</text>
+  <line x1="842" y1="628" x2="882" y2="628" stroke="#333" stroke-width="1.5"/>
+  <text x="890" y="632">local only</text>
+  <line x1="842" y1="645" x2="882" y2="645" stroke="#d79b00" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="890" y="649">Wispr Flow traffic, dashed</text>
+  <line x1="842" y1="662" x2="882" y2="662" stroke="#b59a2a" stroke-width="2" stroke-dasharray="2 4"/>
+  <text x="890" y="666">optional Bedrock traffic, dotted (step 7 only)</text>
+
+  <!-- Local flows (solid) -->
+  <g fill="none" stroke="#333" stroke-width="1.5" marker-end="url(#a)">
+    <path d="M85,162 V248"/>
+    <path d="M215,285 H245 V140 H288"/>
+    <path d="M100,100 H288"/>
+    <path d="M400,160 V288" marker-start="url(#a)"/>
+    <path d="M390,360 V408"/>
+    <path d="M390,500 V568"/>
+  </g>
+  <path d="M650,570 V502" fill="none" stroke="#b85450" stroke-width="1.5" marker-end="url(#r)"/>
+
+  <!-- Wispr Flow traffic (orange dashed) -->
+  <path d="M170,250 V200 H1000 V172" fill="none" stroke="#d79b00" stroke-width="1.5" stroke-dasharray="6 4" marker-start="url(#o)" marker-end="url(#o)"/>
+
+  <!-- Optional Bedrock traffic (yellow dashed) -->
+  <g fill="none" stroke="#b59a2a" stroke-width="2" stroke-dasharray="2 4" marker-end="url(#y)">
+    <path d="M500,325 H650 V408"/>
+    <path d="M762,455 H810 V355 H858" marker-start="url(#y)"/>
+    <path d="M1000,390 V448"/>
+  </g>
+
+  <!-- Flow labels -->
+  <g font-size="11">
+    <text x="93" y="210">1. speak</text>
+    <text x="195" y="93" text-anchor="middle">4. paste logs</text>
+    <text x="252" y="176">3. types text</text>
+    <text x="585" y="193" text-anchor="middle" fill="#9c6500">2. audio + text box context</text>
+    <text x="408" y="272">WebSocket (localhost)</text>
+    <text x="398" y="390">5. analyze_logs()</text>
+    <text x="398" y="540">6. generate_markdown_report()</text>
+    <text x="658" y="360" fill="#7a6200">7. only after toggle</text>
+    <text x="658" y="374" fill="#7a6200">+ consent + click</text>
+    <text x="838" y="408" fill="#7a6200">8. redacted logs</text>
+    <text x="838" y="421" fill="#7a6200">HTTPS + SigV4</text>
+    <text x="838" y="434" fill="#7a6200">9. explanation back</text>
+    <text x="1008" y="424">inference</text>
+    <text x="658" y="540" fill="#b85450">credentials</text>
+  </g>
+</svg>
