@@ -9,7 +9,60 @@ VoiceOps AI helps developers understand AWS-style incident logs and find safe tr
 
 You can download all of this as a Markdown incident report.
 
-Built for the WeMakeDevs x Wispr Flow No Hands Challenge.
+Built for the WeMakeDevs x Wispr Flow No Hands Challenge (Builders Track).
+
+**Live app:** https://voiceopsai.streamlit.app/
+
+## Why I built this
+
+**The problem.** While deploying my own AWS projects, I kept losing time decoding errors like `AccessDenied` and Lambda timeouts, digging through logs to find which permission, model, or setting was actually wrong. It happened while deploying this very app: Bedrock on Streamlit Cloud failed with a vague "Access denied". The real cause turned out to be that my IAM user could call `amazon.nova-pro-v1:0`, but the app was requesting `us.amazon.nova-2-lite-v1:0`. Finding that took several attempts and a CloudTrail lookup.
+
+**Who it's for.** Developers and on-call engineers who work with AWS and need a fast, trustworthy first read of an incident. It's the tool I keep open for that.
+
+**What it gives them.**
+
+- The error type, the exact log lines that prove it, and possible causes.
+- Read-only next steps.
+- An honest "unrecognized" when it doesn't know, instead of a guess.
+- Weak matches marked as tentative.
+- Commands that could change AWS resources are never run, and any the AI suggests are flagged.
+
+## How I used Wispr Flow
+
+Wispr Flow is part of both how VoiceOps AI was built and how it's used.
+
+**In the build.** I built this project mostly hands-free, by dictating prompts with Wispr Flow to an AI coding agent. That included:
+
+- the requirements
+- the detection improvements
+- bug reports from the live deployment, such as the boto3 install error and the Bedrock "Access denied"
+- the README and architecture write-up
+- the submission text
+
+**In the workflow.** When an incident happens, you click into the **Incident logs** box, hold the Wispr Flow hotkey, and say the error you're reading, for example "Task timed out after thirty seconds". Then click **Analyze logs**. That's useful when the error is on another screen, a phone alert, or a teammate's message.
+
+**With the Wispr Flow MCP server.** My AI coding agent (Kiro) is connected to the Wispr Flow MCP server, which gives read-only access to my Wispr notes, recorded meetings, transcripts, and calendar. That opens up voice-first incident workflows beyond the text box:
+
+| Wispr Flow source | Workflow |
+| --- | --- |
+| Notes (scratchpad) | Dictate an incident note while debugging. The agent reads the note through MCP and runs it through `analyzer.py` locally. |
+| Meeting transcripts | Record an incident call or postmortem with Wispr's Meeting Recorder. The agent pulls the error messages people read out, and analyzes them. |
+| Calendar | Find the incident review on the calendar and attach the VoiceOps report to the follow-up. |
+
+The MCP server is signed in to my personal Wispr account, so it's deliberately **not** connected to the public Streamlit app. That would let any visitor read my notes. It stays in my local agent workflow, and nothing is sent to Bedrock unless I ask.
+
+**Using it safely.** Paste full logs rather than dictating them. Add AWS error codes like `ThrottlingException` to your Wispr dictionary. Review Wispr's privacy settings before dictating work data. See [Setup](#4-optional-voice-input-with-wispr-flow) and [Security notes](#wispr-flow).
+
+## Does it work?
+
+- **Live:** https://voiceopsai.streamlit.app/ needs no sign-up. Load a sample, click **Analyze logs**, then optionally **Explain with Bedrock**.
+- **Verified in production:**
+  - sample analysis
+  - the consent gate
+  - a real Amazon Nova Pro explanation
+  - the Markdown report download
+- **Tested:** 126 automated tests cover every error category, unknown input, false positives, redaction, the Bedrock integration (with a fake client), and the UI.
+- **Runs locally too,** with no AWS credentials. See [Setup](#setup).
 
 ## Features
 
@@ -244,19 +297,29 @@ The tests cover:
 ## Project structure
 
 ```text
-analyzer.py                   Rule-based detection, sample incidents, Markdown report
-bedrock_client.py             Optional Bedrock explanation, redaction, risky-command check
-app.py                        Streamlit dashboard (UI only)
-docs/architecture.drawio      Editable architecture diagram (draw.io)
-docs/architecture.svg         Rendered diagram shown in this README
-.streamlit/config.toml        Binds to localhost, disables usage statistics
-.streamlit/secrets.toml.example  Template for AWS credentials on hosted deployments
-tests/test_analyzer.py        Analyzer and report tests
-tests/test_bedrock_client.py  Bedrock integration tests (no network)
-tests/test_app.py             Headless Streamlit UI tests
-requirements.txt              Runtime dependencies (Streamlit, boto3)
-requirements-dev.txt          Test dependencies
+VoiceOps-AI/
+├── app.py                       Streamlit dashboard (UI only): input, results, consent gate, report download
+├── analyzer.py                  Rule-based detection, sample incidents, Markdown report (no network)
+├── bedrock_client.py            Optional Bedrock explanation: credentials, redaction, risky-command check
+├── requirements.txt             Runtime dependencies (Streamlit, boto3), pinned
+├── requirements-dev.txt         Test dependencies (pytest)
+├── pytest.ini                   Test configuration
+├── .streamlit/
+│   ├── config.toml              Server and privacy settings (localhost binding, no usage stats)
+│   └── secrets.toml.example     Placeholder template for AWS credentials and model ID
+├── docs/
+│   ├── architecture.drawio      Editable architecture diagram (draw.io)
+│   └── architecture.svg         Rendered diagram shown in this README
+├── tests/
+│   ├── test_analyzer.py         Detection, confidence, false positives, report tests
+│   ├── test_bedrock_client.py   Bedrock integration, redaction, credentials (no network)
+│   └── test_app.py              Headless Streamlit UI tests, including secrets and consent
+├── .gitignore                   Keeps secrets, logs, reports, and caches out of git
+├── LICENSE                      MIT License
+└── README.md
 ```
+
+Not committed (git-ignored): `.streamlit/secrets.toml`, `.venv/`, downloaded `voiceops-incident-*.md` reports.
 
 ## Adding a new error category
 
