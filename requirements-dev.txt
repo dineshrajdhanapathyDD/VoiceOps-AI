@@ -1,2 +1,2 @@
--r requirements-bedrock.txt
+-r requirements.txt
 pytest==9.1.1

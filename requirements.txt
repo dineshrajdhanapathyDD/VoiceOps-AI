@@ -1,1 +1,3 @@
 streamlit==1.52.2
+# Used only by the optional Amazon Bedrock explanation (imported lazily).
+boto3==1.43.93

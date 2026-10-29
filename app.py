@@ -94,7 +94,7 @@ def render_sidebar() -> None:
             st.text_input("Region", value=bedrock_client.DEFAULT_REGION, key="bedrock_region")
             st.caption("Uses your local AWS credentials. Nothing is sent until you click the explain button.")
             if not bedrock_client.boto3_available():
-                st.warning("boto3 is not installed. Run `pip install -r requirements-bedrock.txt`.")
+                st.warning("boto3 is not installed. Run `pip install -r requirements.txt` (note the `-r`).")
 
         st.divider()
         st.subheader("Privacy and safety")

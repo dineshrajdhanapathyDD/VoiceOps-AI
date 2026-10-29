@@ -123,7 +123,7 @@ def _make_client(region: str) -> Any:
         from botocore.config import Config
     except ImportError as exc:
         raise BedrockUnavailableError(
-            "boto3 is not installed. Run: pip install -r requirements-bedrock.txt"
+            "boto3 is not installed. Run: pip install -r requirements.txt"
         ) from exc
     return boto3.client(
         "bedrock-runtime",

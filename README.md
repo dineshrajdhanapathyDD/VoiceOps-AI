@@ -102,23 +102,21 @@ Confidence works like this:
 ```powershell
 python -m venv .venv
 .venv\Scripts\Activate.ps1        # macOS/Linux: source .venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements.txt   # the -r flag is required
 streamlit run app.py
 ```
 
 Open http://localhost:8501, choose a sample in the sidebar, click **Load sample**, then **Analyze logs**.
 
+`requirements.txt` installs Streamlit and boto3. boto3 is only loaded when you use the optional Bedrock feature, so the core analyzer works without AWS credentials.
+
+If you see `No matching distribution found for requirements.txt`, the `-r` flag is missing. Without it, pip looks for a package literally named "requirements.txt".
+
 ### 2. Optional: enable Amazon Bedrock explanations
 
-1. Install the extra dependency:
+1. Make AWS credentials available through the standard chain, for example `aws configure`, `aws login`, or `aws sso login`. Check which identity is active with `aws sts get-caller-identity`.
 
-   ```powershell
-   pip install -r requirements-bedrock.txt
-   ```
-
-2. Make AWS credentials available through the standard chain, for example `aws configure`, `aws login`, or `aws sso login`. Check which identity is active with `aws sts get-caller-identity`.
-
-3. Grant only the permission the app needs. The default model is a cross-Region inference profile, so the policy needs both the profile and the underlying foundation model. Replace `<account-id>`:
+2. Grant only the permission the app needs. The default model is a cross-Region inference profile, so the policy needs both the profile and the underlying foundation model. Replace `<account-id>`:
 
    ```json
    {
@@ -137,7 +135,7 @@ Open http://localhost:8501, choose a sample in the sidebar, click **Load sample*
    }
    ```
 
-4. Start the app, turn on **Enable AI explanation** in the sidebar, analyze logs, then use the panel under the results.
+3. Start the app, turn on **Enable AI explanation** in the sidebar, analyze logs, then use the panel under the results.
 
 The defaults are model `us.amazon.nova-2-lite-v1:0` in Region `us-east-1`. Override them in the sidebar or with environment variables:
 
@@ -174,7 +172,7 @@ Tips for voice input:
 
 ### Amazon Bedrock (optional)
 
-- Off by default, and boto3 is not even required unless you use it.
+- Off by default. boto3 is installed but only imported when you click **Explain with Bedrock**.
 - Nothing is sent until you enable it, review the preview, tick the consent box, and click **Explain with Bedrock**. Consent resets for every new analysis.
 - Before sending, the app redacts access key IDs, `password=`/`secret=`/`token=` values, bearer tokens, emails, IPv4 addresses, and 12-digit account IDs by default. Redaction is pattern-based and won't catch everything, so always check the preview.
 - At most 20,000 characters are sent. Output is capped at 1,024 tokens.
@@ -223,8 +221,7 @@ docs/architecture.svg         Rendered diagram shown in this README
 tests/test_analyzer.py        Analyzer and report tests
 tests/test_bedrock_client.py  Bedrock integration tests (no network)
 tests/test_app.py             Headless Streamlit UI tests
-requirements.txt              Runtime dependencies (core)
-requirements-bedrock.txt      Adds boto3 for the optional Bedrock feature
+requirements.txt              Runtime dependencies (Streamlit, boto3)
 requirements-dev.txt          Test dependencies
 ```
 
