@@ -117,7 +117,30 @@ def build_user_prompt(prepared_logs: str, result: AnalysisResult) -> str:
     )
 
 
-def _make_client(region: str) -> Any:
+CREDENTIAL_KEYS = ("aws_access_key_id", "aws_secret_access_key", "aws_session_token")
+
+
+def normalize_credentials(raw: Any) -> dict[str, str] | None:
+    """Turn a secrets mapping into boto3 Session keyword arguments.
+
+    Accepts upper- or lower-case key names (AWS_ACCESS_KEY_ID or
+    aws_access_key_id). Returns None unless both the access key ID and the
+    secret access key are present, so a partial config falls back to the
+    default credential chain instead of failing with half a key pair.
+    """
+    if not raw:
+        return None
+    try:
+        items = {str(k).lower(): v for k, v in dict(raw).items()}
+    except (TypeError, ValueError):
+        return None
+    creds = {k: str(items[k]).strip() for k in CREDENTIAL_KEYS if items.get(k)}
+    if not (creds.get("aws_access_key_id") and creds.get("aws_secret_access_key")):
+        return None
+    return creds
+
+
+def _make_client(region: str, credentials: dict[str, str] | None = None) -> Any:
     try:
         import boto3
         from botocore.config import Config
@@ -125,7 +148,10 @@ def _make_client(region: str) -> Any:
         raise BedrockUnavailableError(
             "boto3 is not installed. Run: pip install -r requirements.txt"
         ) from exc
-    return boto3.client(
+    # Explicit credentials (for example from Streamlit secrets on a hosted app)
+    # take priority; otherwise boto3 uses the standard credential chain.
+    session = boto3.Session(**(credentials or {}))
+    return session.client(
         "bedrock-runtime",
         region_name=region,
         config=Config(retries={"max_attempts": 3, "mode": "adaptive"}, read_timeout=60),
@@ -140,7 +166,13 @@ def _friendly_error(exc: Exception) -> str:
     name = type(exc).__name__
 
     if name in {"NoCredentialsError", "PartialCredentialsError"}:
-        return "No AWS credentials found. Configure them with `aws configure` or `aws login`."
+        return (
+            "No AWS credentials found. Locally, run `aws configure` or `aws login`. "
+            "On Streamlit Community Cloud, add an `[aws]` section with "
+            "`aws_access_key_id` and `aws_secret_access_key` under App settings > Secrets."
+        )
+    if code in {"UnrecognizedClientException", "InvalidClientTokenId", "InvalidSignatureException"}:
+        return "AWS rejected the credentials. Check the access key ID and secret access key."
     if name in {"TokenRetrievalError", "SSOTokenLoadError", "UnauthorizedSSOTokenError"} or code == "ExpiredTokenException":
         return "Your AWS session has expired. Sign in again and retry."
     if code == "AccessDeniedException":
@@ -161,6 +193,7 @@ def explain_with_bedrock(
     region: str = DEFAULT_REGION,
     redact_sensitive: bool = True,
     client: Any = None,
+    credentials: dict[str, str] | None = None,
 ) -> str:
     """Ask a Bedrock model to explain the incident. Returns Markdown text.
 
@@ -172,7 +205,7 @@ def explain_with_bedrock(
         raise ValueError("Model ID and Region are required.")
 
     if client is None:
-        client = _make_client(region.strip())
+        client = _make_client(region.strip(), credentials)
 
     prompt = build_user_prompt(prepare_logs(logs, redact_sensitive), result)
     try:

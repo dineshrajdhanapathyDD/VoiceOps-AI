@@ -47,7 +47,7 @@ The editable source is [`docs/architecture.drawio`](docs/architecture.drawio). O
 | `app.py` | UI only: layout, session state, buttons, the Bedrock opt-in toggle and consent gate, and the report download. |
 | `analyzer.py` | The detection engine. Scores each category with weighted signals and context, picks the best match, and sets confidence (see [How detection works](#how-detection-works)). Also holds the sample incidents and builds the Markdown report. No network access. |
 | `bedrock_client.py` | Optional. Redacts the logs, builds a preview, caps the size, calls the Bedrock Converse API, and scans the reply for state-changing AWS CLI commands. boto3 is imported only when this runs. |
-| AWS credential chain | Standard boto3 credential sources (`aws configure`, `aws login`, SSO, environment variables). VoiceOps AI never stores credentials. |
+| AWS credentials | The `[aws]` section of Streamlit secrets on hosted deployments, otherwise the standard boto3 chain (`aws configure`, `aws login`, SSO, environment variables). VoiceOps AI never stores credentials. |
 | Amazon Bedrock and Amazon Nova | Generate the optional plain-language explanation in your own AWS account. |
 
 ### Data flow
@@ -146,7 +146,39 @@ $env:VOICEOPS_BEDROCK_REGION = "us-east-1"
 
 If you change the model, update the policy resources to match. Bedrock calls are billed to your AWS account.
 
-### 3. Optional: voice input with Wispr Flow
+### 3. Optional: deploy to Streamlit Community Cloud
+
+The core analyzer works on Community Cloud without any setup. Bedrock needs one extra step.
+
+**Why Bedrock fails after deploying.** Locally, boto3 finds your own AWS login (`aws configure`, `aws login`, or SSO). A Community Cloud container has none of these: no `~/.aws` files, no SSO session, and no IAM role. So every Bedrock call fails with "No AWS credentials found". The fix is to give the app its own credentials through Streamlit secrets.
+
+1. **Create a dedicated IAM user** for the app, for example `voiceops-streamlit`. Attach only the `bedrock:InvokeModel` policy from step 2 above, then create an access key for it. Don't reuse your personal or admin keys.
+2. **Add secrets** in your app's **Settings > Secrets** on share.streamlit.io, using [`.streamlit/secrets.toml.example`](.streamlit/secrets.toml.example) as the template:
+
+   ```toml
+   [aws]
+   aws_access_key_id = "<access-key-id>"
+   aws_secret_access_key = "<secret-access-key>"
+   region = "us-east-1"
+
+   [voiceops]
+   bedrock_access_code = "<choose-a-long-random-code>"
+   ```
+
+3. **Save and reboot the app.** In the sidebar, after **Enable AI explanation**, the caption should read "Uses AWS credentials from Streamlit secrets".
+
+How it works: `app.py` reads the `[aws]` section from `st.secrets` and passes the keys to an explicit `boto3.Session`. It doesn't depend on secrets being copied into environment variables. Without an `[aws]` section, or with only half a key pair, it falls back to the standard credential chain, so local development is unchanged.
+
+**Protect your AWS bill.** A public Community Cloud app can be used by anyone with the link, and every **Explain with Bedrock** click is billed to your account. Do at least one of these:
+
+- Set `bedrock_access_code`. The app then asks for the code before the explain button works, and also checks the code on the server.
+- Make the app private in its Community Cloud sharing settings.
+
+Also set an [AWS Budgets](https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-managing-costs.html) alert, and rotate the access key regularly.
+
+If you're testing secrets locally, copy the template to `.streamlit/secrets.toml`. That file is gitignored, so it won't be committed.
+
+### 4. Optional: voice input with Wispr Flow
 
 1. Install Wispr Flow from [wisprflow.ai](https://wisprflow.ai), sign in, and grant microphone access when prompted.
 2. Before dictating anything work-related, review **Settings > Data and Privacy**. See [Wispr Flow](#wispr-flow) under Security notes.
@@ -177,7 +209,8 @@ Tips for voice input:
 - Before sending, the app redacts access key IDs, `password=`/`secret=`/`token=` values, bearer tokens, emails, IPv4 addresses, and 12-digit account IDs by default. Redaction is pattern-based and won't catch everything, so always check the preview.
 - At most 20,000 characters are sent. Output is capped at 1,024 tokens.
 - The prompt marks the logs as untrusted data and asks for read-only steps only. The model can still ignore this; in testing, Nova suggested `aws lambda invoke`. The reply is therefore scanned locally, and state-changing AWS CLI commands are flagged in the UI and the report.
-- Credentials come only from the standard AWS credential chain. Nothing is hardcoded or stored. Use the least-privilege policy above.
+- Credentials come from Streamlit secrets (`[aws]` section) when set, otherwise from the standard AWS credential chain. Nothing is hardcoded, logged, or shown in the UI. Use a dedicated IAM user or role with the least-privilege policy above.
+- On public deployments, set `bedrock_access_code` or make the app private. Otherwise anyone with the link can run Bedrock calls billed to your account.
 
 ### Wispr Flow
 
@@ -218,6 +251,7 @@ app.py                        Streamlit dashboard (UI only)
 docs/architecture.drawio      Editable architecture diagram (draw.io)
 docs/architecture.svg         Rendered diagram shown in this README
 .streamlit/config.toml        Binds to localhost, disables usage statistics
+.streamlit/secrets.toml.example  Template for AWS credentials on hosted deployments
 tests/test_analyzer.py        Analyzer and report tests
 tests/test_bedrock_client.py  Bedrock integration tests (no network)
 tests/test_app.py             Headless Streamlit UI tests

@@ -145,3 +145,77 @@ def test_tentative_result_shows_warning():
     assert not at.exception
     assert any("tentative" in w.value for w in at.warning)
     assert any("Matched signals: 'Connection refused' message" in c.value for c in at.caption)
+
+
+# --- Hosted deployment: credentials and access code from Streamlit secrets ---
+
+AWS_SECRETS = {
+    "aws_access_key_id": "AKIAIOSFODNN7EXAMPLE",
+    "aws_secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+    "region": "us-west-2",
+}
+
+
+def _hosted_app(secrets: dict) -> AppTest:
+    at = AppTest.from_file(APP_PATH, default_timeout=30)
+    for name, value in secrets.items():
+        at.secrets[name] = value
+    at.run()
+    at.toggle(key="bedrock_enabled").set_value(True).run()
+    _button(at, "Load sample").click().run()
+    _button(at, "Analyze logs").click().run()
+    assert not at.exception
+    return at
+
+
+def _capture_explain(monkeypatch) -> dict:
+    import bedrock_client
+
+    captured = {}
+
+    def fake_explain(logs, result, **kwargs):
+        captured.update(kwargs)
+        return "ok"
+
+    monkeypatch.setattr(bedrock_client, "explain_with_bedrock", fake_explain)
+    return captured
+
+
+def test_without_secrets_uses_default_chain(monkeypatch):
+    captured = _capture_explain(monkeypatch)
+    at = _hosted_app({})
+    assert any("local AWS credential chain" in c.value for c in at.caption)
+    at.checkbox(key="bedrock_consent").check().run()
+    _button(at, "Explain with Bedrock").click().run()
+    assert captured["credentials"] is None
+
+
+def test_secrets_credentials_and_region_are_used(monkeypatch):
+    captured = _capture_explain(monkeypatch)
+    at = _hosted_app({"aws": AWS_SECRETS})
+    assert any("from Streamlit secrets" in c.value for c in at.caption)
+    assert at.text_input(key="bedrock_region").value == "us-west-2"
+    at.checkbox(key="bedrock_consent").check().run()
+    _button(at, "Explain with Bedrock").click().run()
+    assert captured["credentials"] == {
+        "aws_access_key_id": AWS_SECRETS["aws_access_key_id"],
+        "aws_secret_access_key": AWS_SECRETS["aws_secret_access_key"],
+    }
+    assert captured["region"] == "us-west-2"
+
+
+def test_access_code_gates_bedrock(monkeypatch):
+    captured = _capture_explain(monkeypatch)
+    at = _hosted_app({"aws": AWS_SECRETS, "voiceops": {"bedrock_access_code": "let-me-in"}})
+    at.checkbox(key="bedrock_consent").check().run()
+    assert _button(at, "Explain with Bedrock").disabled
+
+    at.text_input(key="bedrock_access_input").input("wrong").run()
+    assert _button(at, "Explain with Bedrock").disabled
+
+    at.text_input(key="bedrock_access_input").input("let-me-in").run()
+    explain = _button(at, "Explain with Bedrock")
+    assert not explain.disabled
+    explain.click().run()
+    assert not at.exception
+    assert "credentials" in captured

@@ -60,7 +60,7 @@
     <text x="650" y="458">redact - preview - 20k char cap</text>
     <text x="650" y="475">risky-command check</text>
     <text x="650" y="596" font-weight="bold">AWS credential chain</text>
-    <text x="650" y="613">profile, SSO, or env vars</text>
+    <text x="650" y="613">profile, SSO, env, or st.secrets</text>
     <text x="1000" y="130" font-weight="bold">Cloud transcription</text>
     <text x="1000" y="148">audio + text box context, TLS</text>
     <text x="1000" y="350" font-weight="bold">Amazon Bedrock Runtime</text>

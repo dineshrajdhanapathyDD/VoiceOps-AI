@@ -41,7 +41,7 @@
         <mxCell id="bedrockc" value="&lt;b&gt;bedrock_client.py&lt;/b&gt; (optional)&lt;br&gt;redact - preview - 20k char cap&lt;br&gt;risky-command check" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
           <mxGeometry x="540" y="410" width="220" height="90" as="geometry" />
         </mxCell>
-        <mxCell id="creds" value="&lt;b&gt;AWS credential chain&lt;/b&gt;&lt;br&gt;profile, SSO, or env vars" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+        <mxCell id="creds" value="&lt;b&gt;AWS credential chain&lt;/b&gt;&lt;br&gt;profile, SSO, env, or st.secrets" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
           <mxGeometry x="540" y="570" width="220" height="60" as="geometry" />
         </mxCell>
 

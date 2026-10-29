@@ -194,3 +194,91 @@ def test_report_includes_ai_warning():
     )
     assert "**Warning:**" in report
     assert "`aws lambda invoke`" in report
+
+
+# --- Credentials for hosted deployments (Streamlit secrets) -----------------
+
+FAKE_KEY_ID = "AKIAIOSFODNN7EXAMPLE"  # AWS documentation example values
+FAKE_SECRET = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+
+
+@pytest.mark.parametrize(
+    "raw,expected",
+    [
+        (None, None),
+        ({}, None),
+        ({"aws_access_key_id": FAKE_KEY_ID}, None),  # half a key pair falls back
+        (
+            {"aws_access_key_id": FAKE_KEY_ID, "aws_secret_access_key": FAKE_SECRET, "region": "us-east-1"},
+            {"aws_access_key_id": FAKE_KEY_ID, "aws_secret_access_key": FAKE_SECRET},
+        ),
+        (
+            {"AWS_ACCESS_KEY_ID": f" {FAKE_KEY_ID} ", "AWS_SECRET_ACCESS_KEY": FAKE_SECRET, "AWS_SESSION_TOKEN": "tok"},
+            {"aws_access_key_id": FAKE_KEY_ID, "aws_secret_access_key": FAKE_SECRET, "aws_session_token": "tok"},
+        ),
+        ("not a mapping", None),
+    ],
+)
+def test_normalize_credentials(raw, expected):
+    assert bedrock_client.normalize_credentials(raw) == expected
+
+
+def test_explicit_credentials_used_for_session(monkeypatch):
+    boto3 = pytest.importorskip("boto3")
+    captured = {}
+
+    class FakeSession:
+        def __init__(self, **kwargs):
+            captured["session"] = kwargs
+
+        def client(self, service, **kwargs):
+            captured["service"] = service
+            captured["region"] = kwargs["region_name"]
+            return FakeClient()
+
+    monkeypatch.setattr(boto3, "Session", FakeSession)
+    creds = {"aws_access_key_id": FAKE_KEY_ID, "aws_secret_access_key": FAKE_SECRET}
+    explain_with_bedrock("Task timed out after 3 seconds", _result(), region="us-west-2", credentials=creds)
+    assert captured == {"session": creds, "service": "bedrock-runtime", "region": "us-west-2"}
+
+
+def test_default_credential_chain_when_no_credentials(monkeypatch):
+    boto3 = pytest.importorskip("boto3")
+    captured = {}
+
+    class FakeSession:
+        def __init__(self, **kwargs):
+            captured["session"] = kwargs
+
+        def client(self, service, **kwargs):
+            return FakeClient()
+
+    monkeypatch.setattr(boto3, "Session", FakeSession)
+    explain_with_bedrock("Task timed out after 3 seconds", _result())
+    assert captured["session"] == {}
+
+
+def test_real_session_carries_explicit_keys():
+    pytest.importorskip("boto3")
+    client = bedrock_client._make_client(
+        "us-east-1", {"aws_access_key_id": FAKE_KEY_ID, "aws_secret_access_key": FAKE_SECRET}
+    )
+    assert client.meta.region_name == "us-east-1"
+    assert client._request_signer._credentials.access_key == FAKE_KEY_ID
+
+
+def test_no_credentials_message_mentions_streamlit_secrets():
+    botocore_exceptions = pytest.importorskip("botocore.exceptions")
+    with pytest.raises(BedrockUnavailableError, match="App settings > Secrets"):
+        explain_with_bedrock(
+            "Task timed out after 3 seconds",
+            _result(),
+            client=FakeClient(exc=botocore_exceptions.NoCredentialsError()),
+        )
+
+
+def test_invalid_keys_message():
+    botocore_exceptions = pytest.importorskip("botocore.exceptions")
+    exc = botocore_exceptions.ClientError({"Error": {"Code": "UnrecognizedClientException"}}, "Converse")
+    with pytest.raises(BedrockUnavailableError, match="rejected the credentials"):
+        explain_with_bedrock("Task timed out after 3 seconds", _result(), client=FakeClient(exc=exc))

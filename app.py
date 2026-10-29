@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import hmac
+from typing import Any
+
 import streamlit as st
 
 import bedrock_client
@@ -59,6 +62,44 @@ def _run_analysis() -> None:
         st.session_state["input_error"] = "Paste some log text or load a sample first."
 
 
+def _secrets_section(name: str) -> dict[str, Any]:
+    """Return a section of Streamlit secrets, or {} when none are configured.
+
+    Hosted apps (Streamlit Community Cloud) have no ~/.aws files, SSO session,
+    or IAM role, so AWS credentials must come from the app's secrets instead.
+    """
+    try:
+        section = st.secrets.get(name)
+    except Exception:  # Streamlit raises when no secrets.toml exists at all.
+        return {}
+    try:
+        return dict(section) if section else {}
+    except (TypeError, ValueError):
+        return {}
+
+
+def _aws_credentials() -> dict[str, str] | None:
+    return bedrock_client.normalize_credentials(_secrets_section("aws"))
+
+
+def _default_region() -> str:
+    aws = {str(k).lower(): v for k, v in _secrets_section("aws").items()}
+    return str(aws.get("region") or aws.get("aws_default_region") or bedrock_client.DEFAULT_REGION)
+
+
+def _access_code() -> str:
+    """Optional code that visitors must enter before Bedrock can be called."""
+    return str(_secrets_section("voiceops").get("bedrock_access_code") or "")
+
+
+def _access_granted() -> bool:
+    expected = _access_code()
+    if not expected:
+        return True
+    entered = st.session_state.get("bedrock_access_input") or ""
+    return hmac.compare_digest(entered.encode(), expected.encode())
+
+
 def _run_bedrock() -> None:
     """Explicit user action: send the prepared logs to Amazon Bedrock."""
     st.session_state.pop(AI_ERROR_KEY, None)
@@ -66,14 +107,19 @@ def _run_bedrock() -> None:
     logs = st.session_state.get(ANALYZED_LOGS_KEY, "")
     if result is None or not st.session_state.get("bedrock_consent"):
         return
+    # Checked server-side too, not only by disabling the button.
+    if not _access_granted():
+        st.session_state[AI_ERROR_KEY] = "Incorrect access code."
+        return
     model_id = st.session_state.get("bedrock_model_id", bedrock_client.DEFAULT_MODEL_ID)
     try:
         st.session_state[AI_KEY] = bedrock_client.explain_with_bedrock(
             logs,
             result,
             model_id=model_id,
-            region=st.session_state.get("bedrock_region", bedrock_client.DEFAULT_REGION),
+            region=st.session_state.get("bedrock_region") or _default_region(),
             redact_sensitive=st.session_state.get("bedrock_redact", True),
+            credentials=_aws_credentials(),
         )
         st.session_state[AI_MODEL_KEY] = model_id
     except (bedrock_client.BedrockUnavailableError, ValueError) as exc:
@@ -91,8 +137,13 @@ def render_sidebar() -> None:
         st.toggle("Enable AI explanation", key="bedrock_enabled", value=False)
         if st.session_state.get("bedrock_enabled"):
             st.text_input("Model ID", value=bedrock_client.DEFAULT_MODEL_ID, key="bedrock_model_id")
-            st.text_input("Region", value=bedrock_client.DEFAULT_REGION, key="bedrock_region")
-            st.caption("Uses your local AWS credentials. Nothing is sent until you click the explain button.")
+            st.text_input("Region", value=_default_region(), key="bedrock_region")
+            source = (
+                "AWS credentials from Streamlit secrets"
+                if _aws_credentials()
+                else "your local AWS credential chain"
+            )
+            st.caption(f"Uses {source}. Nothing is sent until you click the explain button.")
             if not bedrock_client.boto3_available():
                 st.warning("boto3 is not installed. Run `pip install -r requirements.txt` (note the `-r`).")
 
@@ -125,10 +176,12 @@ def render_bedrock_panel() -> None:
         "which may incur charges.",
         key="bedrock_consent",
     )
+    if _access_code():
+        st.text_input("Access code", type="password", key="bedrock_access_input")
     st.button(
         "Explain with Bedrock",
         on_click=_run_bedrock,
-        disabled=not st.session_state.get("bedrock_consent"),
+        disabled=not (st.session_state.get("bedrock_consent") and _access_granted()),
     )
 
     error = st.session_state.get(AI_ERROR_KEY)
